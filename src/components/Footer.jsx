@@ -31,17 +31,35 @@ export default function Footer() {
             <p className="eyebrow text-gold mb-4">Connect</p>
             <ul className="space-y-2 text-sm text-chalk/85">
               <li>
-                <a href="mailto:contact@amri.org" className="hover:text-gold transition-colors">Email</a>
+                <Link
+                  to="/contact"
+                  className="hover:text-gold transition-colors"
+                >
+                  Email - amrimathematics@gmail.com
+                </Link>
               </li>
               {/* <li>
                 <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">LinkedIn</a>
               </li>
               <li>
                 <a href="https://www.youtube.com" target="_blank" rel="noopener noreferrer" className="hover:text-gold transition-colors">YouTube</a>
-              </li>
-              <li>
-                <Link to="/contact" className="hover:text-gold transition-colors">Location</Link>
               </li> */}
+              <li>
+                <Link
+                  to="/contact"
+                  className="hover:text-gold transition-colors"
+                >
+                  Location - 8, SMP nagar, coimbatore, Tamil Nadu, 642109
+                </Link>
+                </li>
+                <li>
+                <Link
+                  to="/contact"
+                  className="hover:text-gold transition-colors"
+                >
+                  Phone - +91 8760594879
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
