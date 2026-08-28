@@ -28,12 +28,69 @@ const app = express();
 
 app.use(helmet());
 
+/*
+|--------------------------------------------------------------------------
+| CORS
+|--------------------------------------------------------------------------
+*/
+
+const allowedOrigins = [
+  "https://amri-rho.vercel.app",
+  "http://localhost:5173",
+  "http://localhost:3000",
+];
+
+// Also allow CLIENT_URL from environment variables
+if (process.env.CLIENT_URL) {
+  allowedOrigins.push(process.env.CLIENT_URL);
+}
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: function (origin, callback) {
+      // Allow requests with no origin
+      // (Postman, server-to-server requests, etc.)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("CORS blocked origin:", origin);
+
+      return callback(
+        new Error("Not allowed by CORS")
+      );
+    },
+
     credentials: true,
+
+    methods: [
+      "GET",
+      "POST",
+      "PUT",
+      "PATCH",
+      "DELETE",
+      "OPTIONS",
+    ],
+
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+    ],
   })
 );
+
+// Explicitly handle preflight requests
+app.options("*", cors());
+
+/*
+|--------------------------------------------------------------------------
+| Body Parser
+|--------------------------------------------------------------------------
+*/
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -58,14 +115,23 @@ app.get("/api/health", (req, res) => {
 */
 
 app.use("/api/auth", authRoutes);
+
 app.use("/api/research", researchRoutes);
+
 app.use("/api/events", eventRoutes);
+
 app.use("/api/innovations", innovationRoutes);
+
 app.use("/api/programs", programRoutes);
+
 app.use("/api/dashboard", dashboardRoutes);
+
 app.use("/api/upload", uploadRoutes);
+
 app.use("/api/registrations", registrationRoutes);
+
 app.use("/api/membership", membershipRoutes);
+
 app.use("/api/contact", contactRoutes);
 
 /*
