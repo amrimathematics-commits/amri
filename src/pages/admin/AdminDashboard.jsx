@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 
 import { fetchDashboardStats } from "../../services/contentService";
+import api from "../../services/api";
 import { useAuth } from "../../context/AuthContext";
 
 const statCards = [
@@ -133,51 +134,11 @@ const AdminDashboard = () => {
       setAdminsLoading(true);
       setAdminsError("");
 
-      const token = localStorage.getItem(
-        "amri_admin_token"
+      const response = await api.get(
+        "/auth/admins"
       );
 
-      const response = await fetch(
-        "/api/auth/admins",
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      /*
-      |--------------------------------------------------------------------------
-      | SAFELY READ RESPONSE
-      |--------------------------------------------------------------------------
-      */
-
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      let result = null;
-
-      if (contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-
-        throw new Error(
-          `Server returned ${response.status} instead of JSON. ${
-            text.slice(0, 100) || ""
-          }`
-        );
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          result?.message ||
-            "Unable to load administrators."
-        );
-      }
-
-      setAdmins(result?.data || []);
+      setAdmins(response.data?.data || []);
     } catch (err) {
       console.error(
         "Failed to load admins:",
@@ -185,7 +146,8 @@ const AdminDashboard = () => {
       );
 
       setAdminsError(
-        err.message ||
+        err.response?.data?.message ||
+          err.message ||
           "Unable to load administrators."
       );
     } finally {
@@ -290,58 +252,16 @@ const AdminDashboard = () => {
     try {
       setCreatingAdmin(true);
 
-      const token = localStorage.getItem(
-        "amri_admin_token"
-      );
-
-      const response = await fetch(
-        "/api/auth/admins",
+      const response = await api.post(
+        "/auth/admins",
         {
-          method: "POST",
-          headers: {
-            "Content-Type":
-              "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name: form.name.trim(),
-            email: form.email
-              .trim()
-              .toLowerCase(),
-            password: form.password,
-          }),
+          name: form.name.trim(),
+          email: form.email
+            .trim()
+            .toLowerCase(),
+          password: form.password,
         }
       );
-
-      /*
-      |--------------------------------------------------------------------------
-      | SAFELY READ RESPONSE
-      |--------------------------------------------------------------------------
-      */
-
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      let result = null;
-
-      if (contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-
-        throw new Error(
-          `Server returned ${response.status} instead of JSON. ${
-            text.slice(0, 100) || ""
-          }`
-        );
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          result?.message ||
-            "Unable to create admin."
-        );
-      }
 
       /*
       |--------------------------------------------------------------------------
@@ -349,9 +269,9 @@ const AdminDashboard = () => {
       |--------------------------------------------------------------------------
       */
 
-      if (result?.data) {
+      if (response.data?.data) {
         setAdmins((current) => [
-          result.data,
+          response.data.data,
           ...current,
         ]);
       }
@@ -390,7 +310,8 @@ const AdminDashboard = () => {
       );
 
       setCreateError(
-        err.message ||
+        err.response?.data?.message ||
+          err.message ||
           "Unable to create admin."
       );
     } finally {
@@ -429,49 +350,9 @@ const AdminDashboard = () => {
       setActionError("");
       setActionSuccess("");
 
-      const token = localStorage.getItem(
-        "amri_admin_token"
+      await api.patch(
+        `/auth/admins/${adminId}/promote`
       );
-
-      const response = await fetch(
-        `/api/auth/admins/${adminId}/promote`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      /*
-      |--------------------------------------------------------------------------
-      | SAFELY READ RESPONSE
-      |--------------------------------------------------------------------------
-      */
-
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      let result = null;
-
-      if (contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-
-        throw new Error(
-          `Server returned ${response.status} instead of JSON. ${
-            text.slice(0, 100) || ""
-          }`
-        );
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          result?.message ||
-            "Unable to promote admin."
-        );
-      }
 
       /*
       |--------------------------------------------------------------------------
@@ -500,7 +381,8 @@ const AdminDashboard = () => {
       );
 
       setActionError(
-        err.message ||
+        err.response?.data?.message ||
+          err.message ||
           "Unable to promote admin."
       );
     } finally {
@@ -563,49 +445,9 @@ const AdminDashboard = () => {
       setActionError("");
       setActionSuccess("");
 
-      const token = localStorage.getItem(
-        "amri_admin_token"
+      await api.delete(
+        `/auth/admins/${adminId}`
       );
-
-      const response = await fetch(
-        `/api/auth/admins/${adminId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      /*
-      |--------------------------------------------------------------------------
-      | SAFELY READ RESPONSE
-      |--------------------------------------------------------------------------
-      */
-
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      let result = null;
-
-      if (contentType.includes("application/json")) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-
-        throw new Error(
-          `Server returned ${response.status} instead of JSON. ${
-            text.slice(0, 100) || ""
-          }`
-        );
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          result?.message ||
-            "Unable to delete admin."
-        );
-      }
 
       /*
       |--------------------------------------------------------------------------
@@ -629,7 +471,8 @@ const AdminDashboard = () => {
       );
 
       setActionError(
-        err.message ||
+        err.response?.data?.message ||
+          err.message ||
           "Unable to delete admin."
       );
     } finally {
@@ -693,11 +536,7 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
         {statCards.map(
-          ({
-            key,
-            label,
-            icon: Icon,
-          }) => (
+          ({ key, label, icon: Icon }) => (
             <div
               key={key}
               className="bg-white rounded-lg border border-[#101c4d]/10 p-5"
@@ -722,7 +561,6 @@ const AdminDashboard = () => {
 
       {/* =========================================================
           ADMIN MANAGEMENT
-          SUPERADMIN ONLY
       ========================================================= */}
 
       {admin?.role === "superadmin" && (
@@ -760,22 +598,21 @@ const AdminDashboard = () => {
               className="inline-flex items-center justify-center gap-2 bg-[#101c4d] text-white px-5 py-3 rounded-md text-sm hover:bg-[#17275f] transition-colors"
             >
               <UserPlus size={17} />
+
               Add New Admin
             </button>
           </div>
 
-          {/* =====================================================
-              ACTION MESSAGES
-          ===================================================== */}
+          {/* ADMIN ACTION MESSAGE */}
 
           {actionError && (
-            <div className="mb-4 bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-4 py-3">
+            <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-4 py-3 mb-4">
               {actionError}
             </div>
           )}
 
           {actionSuccess && (
-            <div className="mb-4 bg-green-50 border border-green-200 text-green-700 text-sm rounded-md px-4 py-3">
+            <div className="bg-green-50 border border-green-200 text-green-700 text-sm rounded-md px-4 py-3 mb-4">
               {actionSuccess}
             </div>
           )}
@@ -785,6 +622,8 @@ const AdminDashboard = () => {
           ===================================================== */}
 
           <div className="bg-white rounded-lg border border-[#101c4d]/10 overflow-hidden">
+            {/* LOADING */}
+
             {adminsLoading && (
               <div className="p-6 flex items-center gap-3 text-sm text-[#101c4d]/50">
                 <Loader2
@@ -796,11 +635,15 @@ const AdminDashboard = () => {
               </div>
             )}
 
+            {/* ERROR */}
+
             {adminsError && (
               <div className="p-6 text-sm text-red-600">
                 {adminsError}
               </div>
             )}
+
+            {/* EMPTY */}
 
             {!adminsLoading &&
               !adminsError &&
@@ -809,6 +652,8 @@ const AdminDashboard = () => {
                   No administrators found.
                 </div>
               )}
+
+            {/* ADMIN ITEMS */}
 
             {!adminsLoading &&
               !adminsError &&
@@ -845,7 +690,7 @@ const AdminDashboard = () => {
                               {item.name}
                             </p>
 
-                            {/* ROLE BADGE */}
+                            {/* ROLE */}
 
                             <span
                               className={`inline-flex items-center gap-1.5 font-mono text-[10px] uppercase tracking-wide px-3 py-1 rounded-full ${
@@ -908,7 +753,7 @@ const AdminDashboard = () => {
                                 }
                                 disabled={
                                   actionLoading !==
-                                    null
+                                  null
                                 }
                                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-xs font-medium bg-[#f2a223] text-[#101c4d] hover:bg-[#e49a1e] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                               >
@@ -918,6 +763,7 @@ const AdminDashboard = () => {
                                       size={14}
                                       className="animate-spin"
                                     />
+
                                     Promoting...
                                   </>
                                 ) : (
@@ -925,6 +771,7 @@ const AdminDashboard = () => {
                                     <ShieldCheck
                                       size={14}
                                     />
+
                                     Promote to
                                     Super Admin
                                   </>
@@ -944,7 +791,7 @@ const AdminDashboard = () => {
                               }
                               disabled={
                                 actionLoading !==
-                                  null
+                                null
                               }
                               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-md text-xs font-medium border border-red-200 text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
@@ -954,6 +801,7 @@ const AdminDashboard = () => {
                                     size={14}
                                     className="animate-spin"
                                   />
+
                                   Deleting...
                                 </>
                               ) : (
@@ -961,13 +809,14 @@ const AdminDashboard = () => {
                                   <Trash2
                                     size={14}
                                   />
+
                                   Delete
                                 </>
                               )}
                             </button>
                           )}
 
-                          {/* CURRENT USER MESSAGE */}
+                          {/* CURRENT ACCOUNT */}
 
                           {isCurrentAdmin && (
                             <span className="text-xs text-[#101c4d]/40">
@@ -1017,8 +866,7 @@ const AdminDashboard = () => {
                     type="button"
                     onClick={closeAddAdmin}
                     disabled={creatingAdmin}
-                    className="text-[#101c4d]/50 hover:text-[#101c4d] disabled:opacity-40"
-                    aria-label="Close"
+                    className="text-[#101c4d]/50 hover:text-[#101c4d] disabled:opacity-50"
                   >
                     <X size={20} />
                   </button>
@@ -1043,11 +891,8 @@ const AdminDashboard = () => {
                       value={form.name}
                       onChange={handleChange}
                       placeholder="Enter admin name"
-                      autoComplete="name"
                       className="w-full border border-[#101c4d]/15 rounded-md px-4 py-3 text-sm outline-none focus:border-[#f2a223]"
-                      disabled={
-                        creatingAdmin
-                      }
+                      disabled={creatingAdmin}
                     />
                   </div>
 
@@ -1064,11 +909,8 @@ const AdminDashboard = () => {
                       value={form.email}
                       onChange={handleChange}
                       placeholder="admin@example.com"
-                      autoComplete="email"
                       className="w-full border border-[#101c4d]/15 rounded-md px-4 py-3 text-sm outline-none focus:border-[#f2a223]"
-                      disabled={
-                        creatingAdmin
-                      }
+                      disabled={creatingAdmin}
                     />
                   </div>
 
@@ -1085,11 +927,8 @@ const AdminDashboard = () => {
                       value={form.password}
                       onChange={handleChange}
                       placeholder="Minimum 8 characters"
-                      autoComplete="new-password"
                       className="w-full border border-[#101c4d]/15 rounded-md px-4 py-3 text-sm outline-none focus:border-[#f2a223]"
-                      disabled={
-                        creatingAdmin
-                      }
+                      disabled={creatingAdmin}
                     />
                   </div>
 
@@ -1108,11 +947,8 @@ const AdminDashboard = () => {
                       }
                       onChange={handleChange}
                       placeholder="Re-enter password"
-                      autoComplete="new-password"
                       className="w-full border border-[#101c4d]/15 rounded-md px-4 py-3 text-sm outline-none focus:border-[#f2a223]"
-                      disabled={
-                        creatingAdmin
-                      }
+                      disabled={creatingAdmin}
                     />
                   </div>
 
@@ -1138,9 +974,7 @@ const AdminDashboard = () => {
                     <button
                       type="button"
                       onClick={closeAddAdmin}
-                      disabled={
-                        creatingAdmin
-                      }
+                      disabled={creatingAdmin}
                       className="px-5 py-2.5 text-sm border border-[#101c4d]/15 rounded-md text-[#101c4d] hover:bg-gray-50 disabled:opacity-50"
                     >
                       Cancel
@@ -1148,9 +982,7 @@ const AdminDashboard = () => {
 
                     <button
                       type="submit"
-                      disabled={
-                        creatingAdmin
-                      }
+                      disabled={creatingAdmin}
                       className="inline-flex items-center justify-center gap-2 px-5 py-2.5 text-sm rounded-md bg-[#f2a223] text-[#101c4d] font-medium hover:bg-[#e49a1e] disabled:opacity-60"
                     >
                       {creatingAdmin ? (
