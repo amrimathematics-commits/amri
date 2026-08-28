@@ -26,8 +26,16 @@ export default function Contact() {
     setError('')
 
     try {
+      const apiUrl = (
+        import.meta.env.VITE_API_URL || 'http://localhost:5000'
+      ).replace(/\/+$/, '')
+
+      const baseUrl = apiUrl.endsWith('/api')
+        ? apiUrl
+        : `${apiUrl}/api`
+
       const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/contact`,
+        `${baseUrl}/contact`,
         {
           method: 'POST',
           headers: {
@@ -51,7 +59,8 @@ export default function Contact() {
         message: '',
       })
     } catch (err) {
-      console.error(err)
+      console.error('Contact form error:', err)
+
       setError(
         err.message || 'Something went wrong. Please try again.'
       )
