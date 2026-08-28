@@ -5,36 +5,31 @@ const router = express.Router();
 
 /*
 |--------------------------------------------------------------------------
+| POST /api/membership
 | Submit membership application
 |--------------------------------------------------------------------------
 */
 
 router.post("/", async (req, res, next) => {
   try {
-    const {
-      name,
-      email,
-      membershipType,
-    } = req.body;
+    const { name, email, membershipType } = req.body;
 
     if (!name || !email || !membershipType) {
       return res.status(400).json({
         success: false,
-        message:
-          "Name, email and membership type are required.",
+        message: "Name, email and membership type are required.",
       });
     }
 
     const membership = await Membership.create({
-      name,
-      email,
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
       membershipType,
     });
 
     return res.status(201).json({
       success: true,
-      message:
-        "Membership application submitted successfully.",
+      message: "Membership application submitted successfully.",
       data: membership,
     });
   } catch (error) {
@@ -44,6 +39,7 @@ router.post("/", async (req, res, next) => {
 
 /*
 |--------------------------------------------------------------------------
+| GET /api/membership
 | Get membership applications
 |--------------------------------------------------------------------------
 */
