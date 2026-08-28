@@ -1,5 +1,9 @@
 const nodemailer = require("nodemailer");
 
+// ======================================================
+// CREATE EMAIL TRANSPORTER
+// ======================================================
+
 const createTransporter = () => {
   const user = process.env.EMAIL_USER;
   const pass = process.env.EMAIL_PASSWORD;
@@ -10,10 +14,12 @@ const createTransporter = () => {
     );
   }
 
+  const port = Number(process.env.EMAIL_PORT) || 587;
+
   return nodemailer.createTransport({
     host: process.env.EMAIL_HOST || "smtp.gmail.com",
-    port: Number(process.env.EMAIL_PORT) || 587,
-    secure: Number(process.env.EMAIL_PORT) === 465,
+    port,
+    secure: port === 465,
 
     auth: {
       user,
@@ -22,6 +28,18 @@ const createTransporter = () => {
   });
 };
 
+// ======================================================
+// HTML ESCAPE HELPER
+// ======================================================
+
+const escapeHtml = (value = "") => {
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+};
 
 // ======================================================
 // REGISTRATION EMAIL
@@ -35,6 +53,11 @@ const sendRegistrationEmail = async ({
   type,
 }) => {
   const transporter = createTransporter();
+
+  const safeName = escapeHtml(name);
+  const safeTitle = escapeHtml(title);
+  const safeEmail = escapeHtml(email);
+  const safeLink = escapeHtml(registrationLink);
 
   const subject = `AMRI Registration – ${title}`;
 
@@ -76,7 +99,7 @@ AMRI Team
         </h2>
 
         <p>
-          Hello <strong>${name}</strong>,
+          Hello <strong>${safeName}</strong>,
         </p>
 
         <p>
@@ -93,7 +116,7 @@ AMRI Team
           border: 1px solid #ddd;
           background: #fafafa;
         ">
-          <strong>${title}</strong>
+          <strong>${safeTitle}</strong>
         </div>
 
         <p>
@@ -102,7 +125,7 @@ AMRI Team
 
         <p style="margin: 30px 0;">
           <a
-            href="${registrationLink}"
+            href="${safeLink}"
             style="
               display: inline-block;
               padding: 12px 24px;
@@ -124,7 +147,7 @@ AMRI Team
           font-size: 13px;
           word-break: break-all;
         ">
-          ${registrationLink}
+          ${safeLink}
         </p>
 
         <hr style="
@@ -144,15 +167,11 @@ AMRI Team
 
   const result = await transporter.sendMail(mailOptions);
 
-  console.log(
-    `Registration email sent successfully to ${email}`
-  );
-
+  console.log(`Registration email sent successfully to ${email}`);
   console.log("Message ID:", result.messageId);
 
   return result;
 };
-
 
 // ======================================================
 // CONTACT FORM EMAIL
@@ -165,16 +184,20 @@ const sendContactEmail = async ({
 }) => {
   const transporter = createTransporter();
 
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeMessage = escapeHtml(message);
+
   const subject = `AMRI Contact Message – ${name} <${email}>`;
 
   const mailOptions = {
-    // Your AMRI Gmail account
+    // AMRI Gmail account
     from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
 
-    // Receive the contact message in AMRI Gmail
+    // Receive contact message in AMRI Gmail
     to: process.env.EMAIL_USER,
 
-    // Clicking Reply will reply to the visitor
+    // Reply directly to visitor
     replyTo: email,
 
     subject,
@@ -217,13 +240,13 @@ AMRI Website Contact Form
 
         <p>
           <strong>Name:</strong><br />
-          ${name}
+          ${safeName}
         </p>
 
         <p>
           <strong>Email:</strong><br />
-          <a href="mailto:${email}">
-            ${email}
+          <a href="mailto:${safeEmail}">
+            ${safeEmail}
           </a>
         </p>
 
@@ -238,7 +261,7 @@ AMRI Website Contact Form
           border-radius: 4px;
           white-space: pre-wrap;
         ">
-          ${message}
+          ${safeMessage}
         </div>
 
         <hr style="
@@ -269,17 +292,15 @@ AMRI Website Contact Form
 
   const result = await transporter.sendMail(mailOptions);
 
-  console.log(
-    `Contact email received from ${email}`
-  );
-
-  console.log(
-    "Message ID:",
-    result.messageId
-  );
+  console.log(`Contact email received from ${email}`);
+  console.log("Message ID:", result.messageId);
 
   return result;
 };
+
+// ======================================================
+// MEMBERSHIP EMAIL
+// ======================================================
 
 const sendMembershipEmail = async ({
   name,
@@ -288,15 +309,20 @@ const sendMembershipEmail = async ({
 }) => {
   const transporter = createTransporter();
 
-  const subject = `AMRI Membership Request  – ${name} <${email}>`;
+  const safeName = escapeHtml(name);
+  const safeEmail = escapeHtml(email);
+  const safeMembershipType = escapeHtml(membershipType);
+
+  const subject = `AMRI Membership Request – ${name} <${email}>`;
 
   const mailOptions = {
+    // AMRI Gmail account
     from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
 
     // AMRI receives the application
     to: process.env.EMAIL_USER,
 
-    // Reply directly to the applicant
+    // Reply directly to applicant
     replyTo: email,
 
     subject,
@@ -321,7 +347,9 @@ AMRI Website Membership Form
         line-height: 1.6;
       ">
 
-        <h2>New AMRI Membership Application</h2>
+        <h2>
+          New AMRI Membership Application
+        </h2>
 
         <p>
           A new membership application has been submitted
@@ -332,19 +360,19 @@ AMRI Website Membership Form
 
         <p>
           <strong>Full Name:</strong><br />
-          ${name}
+          ${safeName}
         </p>
 
         <p>
           <strong>Email:</strong><br />
-          <a href="mailto:${email}">
-            ${email}
+          <a href="mailto:${safeEmail}">
+            ${safeEmail}
           </a>
         </p>
 
         <p>
           <strong>Membership Type:</strong><br />
-          ${membershipType}
+          ${safeMembershipType}
         </p>
 
         <hr />
@@ -365,14 +393,8 @@ AMRI Website Membership Form
 
   const result = await transporter.sendMail(mailOptions);
 
-  console.log(
-    `Membership application received from ${email}`
-  );
-
-  console.log(
-    "Message ID:",
-    result.messageId
-  );
+  console.log(`Membership application received from ${email}`);
+  console.log("Message ID:", result.messageId);
 
   return result;
 };
@@ -387,9 +409,7 @@ const verifyEmailConnection = async () => {
 
     await transporter.verify();
 
-    console.log(
-      "Email server connection successful"
-    );
+    console.log("Email server connection successful");
 
     return true;
   } catch (error) {
@@ -401,7 +421,6 @@ const verifyEmailConnection = async () => {
     return false;
   }
 };
-
 
 // ======================================================
 // EXPORTS
