@@ -6,6 +6,7 @@ const helmet = require("helmet");
 
 const errorHandler = require("./middleware/errorHandler");
 
+const membershipRoutes = require("./routes/membershipRoutes");
 const authRoutes = require("./routes/authRoutes");
 const researchRoutes = require("./routes/researchRoutes");
 const eventRoutes = require("./routes/eventRoutes");
@@ -62,6 +63,7 @@ app.use("/api/programs", programRoutes);
 app.use("/api/dashboard", dashboardRoutes);
 app.use("/api/upload", uploadRoutes);
 app.use("/api/registrations", registrationRoutes);
+app.use("/api/membership", membershipRoutes);
 
 /*
 |--------------------------------------------------------------------------
