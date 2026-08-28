@@ -6,7 +6,7 @@ const helmet = require("helmet");
 
 const errorHandler = require("./middleware/errorHandler");
 
-const membershipRoutes = require("./routes/membershipRoutes");
+const membershipRoutes = require("./routes/membership");
 const authRoutes = require("./routes/authRoutes");
 const researchRoutes = require("./routes/researchRoutes");
 const eventRoutes = require("./routes/eventRoutes");
