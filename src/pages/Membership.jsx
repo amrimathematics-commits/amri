@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import PageHero from '../components/PageHero.jsx'
+import api from '../services/api.js'
 
 const tiers = [
   {
@@ -56,22 +57,11 @@ export default function Membership() {
     setError('')
 
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/membership`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(form),
-        }
-      )
+      const response = await api.post('/membership', form)
 
-      const data = await response.json()
-
-      if (!response.ok) {
+      if (!response.data?.success) {
         throw new Error(
-          data.message || 'Failed to submit application'
+          response.data?.message || 'Failed to submit application'
         )
       }
 
@@ -83,12 +73,14 @@ export default function Membership() {
         membershipType: 'Student',
       })
     } catch (err) {
-      console.error(err)
+      console.error('Membership submission error:', err)
 
-      setError(
+      const message =
+        err.response?.data?.message ||
         err.message ||
-          'Something went wrong. Please try again.'
-      )
+        'Something went wrong. Please try again.'
+
+      setError(message)
     } finally {
       setLoading(false)
     }
@@ -152,7 +144,10 @@ export default function Membership() {
 
                 <button
                   type="button"
-                  onClick={() => setSubmitted(false)}
+                  onClick={() => {
+                    setSubmitted(false)
+                    setError('')
+                  }}
                   className="btn-gold px-5 py-2.5 text-sm"
                 >
                   Submit another application
@@ -167,41 +162,55 @@ export default function Membership() {
               >
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-ink-soft mb-1">
+                  <label
+                    htmlFor="membership-name"
+                    className="block text-xs font-mono uppercase tracking-wider text-ink-soft mb-1"
+                  >
                     Full name
                   </label>
 
                   <input
+                    id="membership-name"
                     required
                     type="text"
                     name="name"
                     value={form.name}
                     onChange={handleChange}
+                    autoComplete="name"
                     className="w-full border border-ink/20 px-4 py-2.5 bg-paper focus:outline-none focus:border-pen"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-ink-soft mb-1">
+                  <label
+                    htmlFor="membership-email"
+                    className="block text-xs font-mono uppercase tracking-wider text-ink-soft mb-1"
+                  >
                     Email
                   </label>
 
                   <input
+                    id="membership-email"
                     required
                     type="email"
                     name="email"
                     value={form.email}
                     onChange={handleChange}
+                    autoComplete="email"
                     className="w-full border border-ink/20 px-4 py-2.5 bg-paper focus:outline-none focus:border-pen"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono uppercase tracking-wider text-ink-soft mb-1">
+                  <label
+                    htmlFor="membership-type"
+                    className="block text-xs font-mono uppercase tracking-wider text-ink-soft mb-1"
+                  >
                     I am a
                   </label>
 
                   <select
+                    id="membership-type"
                     name="membershipType"
                     value={form.membershipType}
                     onChange={handleChange}
