@@ -22,7 +22,7 @@ const app = express();
 
 /*
 |--------------------------------------------------------------------------
-| Middleware
+| Security
 |--------------------------------------------------------------------------
 */
 
@@ -40,51 +40,60 @@ const allowedOrigins = [
   "http://localhost:3000",
 ];
 
-// Also allow CLIENT_URL from environment variables
+// Add CLIENT_URL if it exists
 if (process.env.CLIENT_URL) {
-  allowedOrigins.push(process.env.CLIENT_URL);
+  const clientUrl = process.env.CLIENT_URL.trim().replace(/\/$/, "");
+
+  if (!allowedOrigins.includes(clientUrl)) {
+    allowedOrigins.push(clientUrl);
+  }
 }
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // Allow requests with no origin
-      // (Postman, server-to-server requests, etc.)
-      if (!origin) {
-        return callback(null, true);
-      }
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests without an Origin header
+    // Example: Postman, server-to-server requests
+    if (!origin) {
+      return callback(null, true);
+    }
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+    const cleanOrigin = origin.trim().replace(/\/$/, "");
 
-      console.log("CORS blocked origin:", origin);
+    if (allowedOrigins.includes(cleanOrigin)) {
+      return callback(null, true);
+    }
 
-      return callback(
-        new Error("Not allowed by CORS")
-      );
-    },
+    console.log("CORS blocked origin:", origin);
 
-    credentials: true,
+    return callback(
+      new Error(`CORS blocked origin: ${origin}`)
+    );
+  },
 
-    methods: [
-      "GET",
-      "POST",
-      "PUT",
-      "PATCH",
-      "DELETE",
-      "OPTIONS",
-    ],
+  credentials: true,
 
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-    ],
-  })
-);
+  methods: [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
+  ],
 
-// Explicitly handle preflight requests
-app.options("*", cors());
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+  ],
+
+  optionsSuccessStatus: 204,
+};
+
+// Main CORS middleware
+app.use(cors(corsOptions));
+
+// Explicit preflight handling
+app.options(/.*/, cors(corsOptions));
 
 /*
 |--------------------------------------------------------------------------
@@ -102,7 +111,7 @@ app.use(express.urlencoded({ extended: true }));
 */
 
 app.get("/api/health", (req, res) => {
-  res.json({
+  res.status(200).json({
     success: true,
     message: "AMRI API is running",
   });
@@ -136,7 +145,7 @@ app.use("/api/contact", contactRoutes);
 
 /*
 |--------------------------------------------------------------------------
-| 404
+| 404 Handler
 |--------------------------------------------------------------------------
 */
 
@@ -144,12 +153,13 @@ app.use((req, res) => {
   res.status(404).json({
     success: false,
     message: "Route not found",
+    path: req.originalUrl,
   });
 });
 
 /*
 |--------------------------------------------------------------------------
-| Error Handler
+| Global Error Handler
 |--------------------------------------------------------------------------
 */
 
