@@ -1,39 +1,118 @@
 import { useEffect, useState } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Upload, X } from "lucide-react";
+
 import DataTable from "../../components/admin/DataTable";
 import ContentForm from "../../components/admin/ContentForm";
 import ConfirmDialog from "../../components/admin/ConfirmDialog";
+
 import { programService } from "../../services/contentService";
 
 const fields = [
-  { name: "title", label: "Title", type: "text", required: true, wide: true },
-  { name: "shortDescription", label: "Short Description", type: "textarea", wide: true },
-  { name: "description", label: "Full Description", type: "textarea", wide: true },
-  { name: "category", label: "Category", type: "text" },
-  { name: "duration", label: "Duration", type: "text", placeholder: "6 weeks" },
-  { name: "eligibility", label: "Eligibility", type: "textarea", wide: true },
-  { name: "location", label: "Location", type: "text" },
-  { name: "startDate", label: "Start Date", type: "date" },
-  { name: "endDate", label: "End Date", type: "date" },
-  { name: "applicationDeadline", label: "Application Deadline", type: "date" },
-  { name: "registrationLink", label: "Registration Link", type: "url" },
-  { name: "image", label: "Image URL", type: "url" },
-  { name: "brochureUrl", label: "Brochure URL", type: "url" },
-  { name: "coordinator", label: "Coordinator", type: "text" },
-  { name: "status", label: "Status", type: "select", options: ["draft", "published"] },
-  { name: "featured", label: "Featured", type: "checkbox" },
+  {
+    name: "title",
+    label: "Title",
+    type: "text",
+    required: true,
+    wide: true,
+  },
+  {
+    name: "shortDescription",
+    label: "Short Description",
+    type: "textarea",
+    wide: true,
+  },
+  {
+    name: "description",
+    label: "Full Description",
+    type: "textarea",
+    wide: true,
+  },
+  {
+    name: "category",
+    label: "Category",
+    type: "text",
+  },
+  {
+    name: "duration",
+    label: "Duration",
+    type: "text",
+    placeholder: "6 weeks",
+  },
+  {
+    name: "eligibility",
+    label: "Eligibility",
+    type: "textarea",
+    wide: true,
+  },
+  {
+    name: "location",
+    label: "Location",
+    type: "text",
+  },
+  {
+    name: "startDate",
+    label: "Start Date",
+    type: "date",
+  },
+  {
+    name: "endDate",
+    label: "End Date",
+    type: "date",
+  },
+  {
+    name: "applicationDeadline",
+    label: "Application Deadline",
+    type: "date",
+  },
+  {
+    name: "registrationLink",
+    label: "Registration Link",
+    type: "url",
+  },
+
+  // Image is handled separately through Cloudinary.
+
+  {
+    name: "brochureUrl",
+    label: "Brochure URL",
+    type: "url",
+  },
+  {
+    name: "coordinator",
+    label: "Coordinator",
+    type: "text",
+  },
+  {
+    name: "status",
+    label: "Status",
+    type: "select",
+    options: ["draft", "published"],
+  },
+  {
+    name: "featured",
+    label: "Featured",
+    type: "checkbox",
+  },
 ];
 
 const columns = [
-  { key: "title", label: "Title" },
-  { key: "category", label: "Category" },
+  {
+    key: "title",
+    label: "Title",
+  },
+  {
+    key: "category",
+    label: "Category",
+  },
   {
     key: "status",
     label: "Status",
     render: (row) => (
       <span
         className={`font-mono text-[10px] uppercase px-2 py-0.5 rounded ${
-          row.status === "published" ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"
+          row.status === "published"
+            ? "bg-green-100 text-green-700"
+            : "bg-gray-100 text-gray-600"
         }`}
       >
         {row.status}
@@ -44,20 +123,50 @@ const columns = [
 
 const ProgramsManager = () => {
   const [items, setItems] = useState([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState(null);
   const [deleting, setDeleting] = useState(null);
+
   const [saving, setSaving] = useState(false);
+
+  // ============================================================
+  // IMAGE STATE
+  // ============================================================
+
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // ============================================================
+  // LOAD
+  // ============================================================
 
   const load = async () => {
     setLoading(true);
+
     try {
-      const res = await programService.getAll({ limit: 100 });
-      setItems(res.data);
-    } catch {
-      setError("Could not load programs.");
+      setError("");
+
+      const res = await programService.getAll({
+        limit: 100,
+      });
+
+      setItems(res.data || []);
+    } catch (err) {
+      console.error(
+        "Failed to load programs:",
+        err
+      );
+
+      setError(
+        err.response?.data?.message ||
+          "Could not load programs."
+      );
     } finally {
       setLoading(false);
     }
@@ -67,50 +176,281 @@ const ProgramsManager = () => {
     load();
   }, []);
 
+  // ============================================================
+  // SELECT IMAGE
+  // ============================================================
+
+  const handleImageChange = (event) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file.");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError("Image must be smaller than 5 MB.");
+      return;
+    }
+
+    setError("");
+
+    setSelectedImage(file);
+
+    const previewUrl = URL.createObjectURL(file);
+
+    setImagePreview(previewUrl);
+
+    setImageUrl("");
+  };
+
+  // ============================================================
+  // UPLOAD IMAGE
+  // ============================================================
+
+  const handleImageUpload = async () => {
+    if (!selectedImage) {
+      setError("Please choose an image first.");
+      return;
+    }
+
+    setUploadingImage(true);
+    setError("");
+
+    try {
+      const res =
+        await programService.uploadImage(
+          selectedImage
+        );
+
+      const url = res.data?.url;
+
+      if (!url) {
+        throw new Error(
+          "Cloudinary did not return an image URL."
+        );
+      }
+
+      setImageUrl(url);
+      setImagePreview(url);
+    } catch (err) {
+      console.error(
+        "Program image upload failed:",
+        err
+      );
+
+      setError(
+        err.response?.data?.message ||
+          err.message ||
+          "Image upload failed."
+      );
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  // ============================================================
+  // REMOVE IMAGE
+  // ============================================================
+
+  const handleRemoveImage = () => {
+    setSelectedImage(null);
+    setImagePreview("");
+    setImageUrl("");
+  };
+
+  // ============================================================
+  // ADD
+  // ============================================================
+
+  const handleAddProgram = () => {
+    setEditing(null);
+
+    handleRemoveImage();
+
+    setError("");
+    setShowForm(true);
+  };
+
+  // ============================================================
+  // EDIT
+  // ============================================================
+
+  const handleEditProgram = (row) => {
+    setEditing(row);
+
+    setSelectedImage(null);
+
+    setImageUrl(row.image || "");
+    setImagePreview(row.image || "");
+
+    setError("");
+    setShowForm(true);
+  };
+
+  // ============================================================
+  // SUBMIT
+  // ============================================================
+
   const handleSubmit = async (payload) => {
     setSaving(true);
+    setError("");
+
     try {
-      if (editing) await programService.update(editing._id, payload);
-      else await programService.create(payload);
+      const finalPayload = {
+        ...payload,
+
+        image:
+          imageUrl ||
+          editing?.image ||
+          "",
+      };
+
+      if (editing) {
+        await programService.update(
+          editing._id,
+          finalPayload
+        );
+      } else {
+        await programService.create(
+          finalPayload
+        );
+      }
+
       setShowForm(false);
       setEditing(null);
-      load();
+
+      handleRemoveImage();
+
+      await load();
     } catch (err) {
-      setError(err.response?.data?.message || "Save failed.");
+      console.error(
+        "Save program failed:",
+        err
+      );
+
+      setError(
+        err.response?.data?.message ||
+          "Save failed."
+      );
     } finally {
       setSaving(false);
     }
   };
 
+  // ============================================================
+  // DELETE
+  // ============================================================
+
   const handleDelete = async () => {
+    if (!deleting) return;
+
     try {
-      await programService.remove(deleting._id);
+      await programService.remove(
+        deleting._id
+      );
+
       setDeleting(null);
-      load();
-    } catch {
-      setError("Delete failed.");
+
+      await load();
+    } catch (err) {
+      console.error(
+        "Delete program failed:",
+        err
+      );
+
+      setError(
+        err.response?.data?.message ||
+          "Delete failed."
+      );
     }
   };
 
+  // ============================================================
+  // PUBLISH
+  // ============================================================
+
+  const handleTogglePublish = async (row) => {
+    try {
+      setError("");
+
+      await programService.togglePublish(
+        row._id
+      );
+
+      await load();
+    } catch (err) {
+      console.error(
+        "Publish toggle failed:",
+        err
+      );
+
+      setError(
+        err.response?.data?.message ||
+          "Could not change publish status."
+      );
+    }
+  };
+
+  // ============================================================
+  // FEATURED
+  // ============================================================
+
+  const handleToggleFeatured = async (row) => {
+    try {
+      setError("");
+
+      await programService.toggleFeatured(
+        row._id
+      );
+
+      await load();
+    } catch (err) {
+      console.error(
+        "Featured toggle failed:",
+        err
+      );
+
+      setError(
+        err.response?.data?.message ||
+          "Could not change featured status."
+      );
+    }
+  };
+
+  // ============================================================
+  // UI
+  // ============================================================
+
   return (
     <div>
+      {/* HEADER */}
+
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="font-serif text-2xl text-[#101c4d]">Programs</h1>
-          <p className="text-sm text-[#101c4d]/60">Manage programs</p>
+          <h1 className="font-serif text-2xl text-[#101c4d]">
+            Programs
+          </h1>
+
+          <p className="text-sm text-[#101c4d]/60">
+            Manage programs
+          </p>
         </div>
+
         {!showForm && (
           <button
-            onClick={() => {
-              setEditing(null);
-              setShowForm(true);
-            }}
+            onClick={handleAddProgram}
             className="flex items-center gap-2 bg-[#101c4d] text-white text-sm font-medium px-4 py-2.5 rounded-md hover:bg-[#1a2a63]"
           >
-            <Plus size={16} /> Add Program
+            <Plus size={16} />
+            Add Program
           </button>
         )}
       </div>
+
+      {/* ERROR */}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 text-sm rounded-md px-4 py-3 mb-5">
@@ -118,11 +458,96 @@ const ProgramsManager = () => {
         </div>
       )}
 
+      {/* FORM */}
+
       {showForm ? (
         <div className="bg-white rounded-lg border border-[#101c4d]/10 p-6 mb-6">
           <h2 className="font-serif text-lg text-[#101c4d] mb-5">
-            {editing ? "Edit Program" : "New Program"}
+            {editing
+              ? "Edit Program"
+              : "New Program"}
           </h2>
+
+          {/* IMAGE UPLOAD */}
+
+          <div className="mb-6 border border-[#101c4d]/10 rounded-md p-5">
+            <label className="block text-sm font-medium text-[#101c4d] mb-3">
+              Program Image
+            </label>
+
+            <div className="flex flex-col sm:flex-row gap-4">
+              <label className="cursor-pointer inline-flex items-center justify-center gap-2 bg-[#101c4d] text-white text-sm px-4 py-2.5 rounded-md hover:bg-[#1a2a63]">
+                <Upload size={16} />
+
+                {selectedImage
+                  ? "Change Image"
+                  : "Choose Image"}
+
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                />
+              </label>
+
+              {selectedImage && !imageUrl && (
+                <button
+                  type="button"
+                  onClick={handleImageUpload}
+                  disabled={uploadingImage}
+                  className="inline-flex items-center justify-center gap-2 bg-[#c9a227] text-white text-sm px-4 py-2.5 rounded-md hover:opacity-90 disabled:opacity-50"
+                >
+                  <Upload size={16} />
+
+                  {uploadingImage
+                    ? "Uploading..."
+                    : "Upload to Cloudinary"}
+                </button>
+              )}
+
+              {(selectedImage ||
+                imagePreview) && (
+                <button
+                  type="button"
+                  onClick={handleRemoveImage}
+                  className="inline-flex items-center justify-center gap-2 border border-red-200 text-red-600 text-sm px-4 py-2.5 rounded-md hover:bg-red-50"
+                >
+                  <X size={16} />
+                  Remove
+                </button>
+              )}
+            </div>
+
+            {imagePreview && (
+              <div className="mt-5">
+                <p className="text-xs text-[#101c4d]/60 mb-2">
+                  Preview
+                </p>
+
+                <img
+                  src={imagePreview}
+                  alt="Program preview"
+                  className="w-full max-w-md h-48 object-cover rounded-md border border-[#101c4d]/10"
+                />
+              </div>
+            )}
+
+            {imageUrl && (
+              <div className="mt-3">
+                <p className="text-xs text-green-600">
+                  ✓ Image uploaded to Cloudinary
+                </p>
+
+                <p className="text-xs text-[#101c4d]/50 mt-1 break-all">
+                  {imageUrl}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* FORM */}
+
           <ContentForm
             fields={fields}
             initialValues={editing}
@@ -130,31 +555,27 @@ const ProgramsManager = () => {
             onCancel={() => {
               setShowForm(false);
               setEditing(null);
+              handleRemoveImage();
             }}
             submitting={saving}
           />
         </div>
       ) : loading ? (
-        <p className="font-mono text-sm text-[#101c4d]/60">Loading…</p>
+        <p className="font-mono text-sm text-[#101c4d]/60">
+          Loading…
+        </p>
       ) : (
         <DataTable
           columns={columns}
           rows={items}
-          onEdit={(row) => {
-            setEditing(row);
-            setShowForm(true);
-          }}
+          onEdit={handleEditProgram}
           onDelete={setDeleting}
-          onTogglePublish={async (row) => {
-            await programService.togglePublish(row._id);
-            load();
-          }}
-          onToggleFeatured={async (row) => {
-            await programService.toggleFeatured(row._id);
-            load();
-          }}
+          onTogglePublish={handleTogglePublish}
+          onToggleFeatured={handleToggleFeatured}
         />
       )}
+
+      {/* DELETE */}
 
       <ConfirmDialog
         open={!!deleting}
