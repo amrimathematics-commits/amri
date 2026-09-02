@@ -14,6 +14,10 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// =====================================================
+// REQUEST INTERCEPTOR
+// =====================================================
+
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("amri_admin_token");
@@ -33,18 +37,17 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// =====================================================
+// RESPONSE INTERCEPTOR
+// =====================================================
+
 api.interceptors.response.use(
   (response) => response,
-
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem("amri_admin_token");
 
-      if (
-        !window.location.pathname.includes(
-          "/admin/login"
-        )
-      ) {
+      if (!window.location.pathname.includes("/admin/login")) {
         window.location.href = "/admin/login";
       }
     }
@@ -52,5 +55,18 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+// =====================================================
+// CONTACT EMAIL
+// =====================================================
+
+export const sendContactEmail = async (contactData) => {
+  const response = await api.post("/contact", contactData);
+  return response.data;
+};
+
+// =====================================================
+// DEFAULT EXPORT
+// =====================================================
 
 export default api;

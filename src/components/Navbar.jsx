@@ -26,14 +26,16 @@ export default function Navbar() {
             </span>
           </NavLink>
 
-          <nav className="hidden lg:flex items-center gap-1 font-mono text-xs uppercase tracking-wider">
+          <nav className="hidden lg:flex items-center gap-1 font-mono font-bold text-sm uppercase tracking-wider">
             {links.map((l) => (
               <NavLink
                 key={l.to}
                 to={l.to}
                 className={({ isActive }) =>
-                  `px-3 py-2 transition-colors ${
-                    isActive ? 'text-pen' : 'text-ink-soft hover:text-ink'
+                  `px-3 py-2 rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? 'bg-gold text-ink-soft'
+                      : 'text-ink hover:bg-gold/30'
                   }`
                 }
               >
@@ -62,7 +64,7 @@ export default function Navbar() {
               key={l.to}
               to={l.to}
               onClick={() => setOpen(false)}
-              className={({ isActive }) => `py-2 ${isActive ? 'text-pen' : 'text-ink-soft'}`}
+              className={({ isActive }) => `py-2 ${isActive ? 'text-gold' : 'text-ink hover:text-ink-soft'}`}
             >
               {l.label}
             </NavLink>

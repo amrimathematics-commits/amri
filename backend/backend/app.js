@@ -6,6 +6,10 @@ const helmet = require("helmet");
 
 const errorHandler = require("./middleware/errorHandler");
 
+const renewalRoutes = require("./routes/renewalRoutes");
+const membershipRenewalAdminRoutes = require("./routes/membershipRenewalAdmin");
+const membershipRenewalRoutes = require("./routes/membershipRenewalRoutes");
+
 const membershipRoutes = require("./routes/membership");
 const contactRoutes = require("./routes/contact");
 
@@ -17,6 +21,8 @@ const programRoutes = require("./routes/programRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const uploadRoutes = require("./routes/uploadRoutes");
 const registrationRoutes = require("./routes/registrations");
+
+const membershipUploadRoutes = require("./routes/membershipUploadRoutes");
 
 const app = express();
 
@@ -143,6 +149,16 @@ app.use("/api/membership", membershipRoutes);
 
 app.use("/api/contact", contactRoutes);
 
+app.use(
+  "/api/admin/membership-renewals",
+  membershipRenewalRoutes
+);
+
+app.use(
+  "/api/membership-upload",
+  membershipUploadRoutes
+);
+
 /*
 |--------------------------------------------------------------------------
 | 404 Handler
@@ -164,5 +180,15 @@ app.use((req, res) => {
 */
 
 app.use(errorHandler);
+
+app.use(
+  "/api/renewal",
+  renewalRoutes
+);
+
+app.use(
+  "/api/admin/membership-renewals",
+  membershipRenewalAdminRoutes
+);
 
 module.exports = app;

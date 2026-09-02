@@ -49,7 +49,7 @@ export default function Footer() {
                   to="/contact"
                   className="hover:text-gold transition-colors"
                 >
-                  Location - 8, SMP nagar, coimbatore, Tamil Nadu, 642109
+                  Location - 8, SMP nagar, Coimbatore, Tamil Nadu, 642109
                 </Link>
                 </li>
                 <li>
