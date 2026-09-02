@@ -2,7 +2,7 @@ import axios from "axios";
 
 /*
 |--------------------------------------------------------------------------
-| API BASE URL
+| AMRI API BASE URL
 |--------------------------------------------------------------------------
 |
 | Development:
@@ -16,8 +16,7 @@ import axios from "axios";
 |--------------------------------------------------------------------------
 */
 
-const configuredApiUrl =
-  import.meta.env.VITE_API_URL;
+const configuredApiUrl = import.meta.env.VITE_API_URL;
 
 const API_URL =
   configuredApiUrl && configuredApiUrl.trim()
@@ -31,19 +30,23 @@ const API_URL =
 | NORMALIZE API URL
 |--------------------------------------------------------------------------
 |
-| These all become:
-|
-| https://amri-gofn.vercel.app/api
-|
-| https://amri-gofn.vercel.app/api/
+| Supports:
 |
 | https://amri-gofn.vercel.app
+| https://amri-gofn.vercel.app/
+| https://amri-gofn.vercel.app/api
+| https://amri-gofn.vercel.app/api/
+|
+| All become:
+|
+| https://amri-gofn.vercel.app/api
 |
 |--------------------------------------------------------------------------
 */
 
 const baseURL =
   API_URL
+    .trim()
     .replace(/\/+$/, "")
     .replace(/\/api$/i, "") + "/api";
 
@@ -58,7 +61,6 @@ console.log("AMRI API Base URL:", baseURL);
 const api = axios.create({
   baseURL,
   withCredentials: true,
-
   headers: {
     Accept: "application/json",
   },
@@ -72,14 +74,12 @@ const api = axios.create({
 
 api.interceptors.request.use(
   (config) => {
-    const token =
-      localStorage.getItem(
-        "amri_admin_token"
-      );
+    const token = localStorage.getItem(
+      "amri_admin_token"
+    );
 
     if (token) {
-      config.headers =
-        config.headers || {};
+      config.headers = config.headers || {};
 
       config.headers.Authorization =
         `Bearer ${token}`;
@@ -89,24 +89,19 @@ api.interceptors.request.use(
     |--------------------------------------------------------------------------
     | CONTENT TYPE
     |--------------------------------------------------------------------------
+    |
+    | For FormData, do not manually set Content-Type.
+    | The browser/Axios will automatically add the multipart
+    | boundary.
+    |
     */
 
-    if (
-      config.data instanceof FormData
-    ) {
-      /*
-      Do NOT manually set multipart/form-data.
-      Axios/browser will add the correct boundary.
-      */
-
+    if (config.data instanceof FormData) {
       if (config.headers) {
-        delete config.headers[
-          "Content-Type"
-        ];
+        delete config.headers["Content-Type"];
       }
     } else {
-      config.headers =
-        config.headers || {};
+      config.headers = config.headers || {};
 
       config.headers["Content-Type"] =
         "application/json";
@@ -129,7 +124,6 @@ api.interceptors.response.use(
   (response) => {
     return response;
   },
-
   (error) => {
     /*
     |--------------------------------------------------------------------------
@@ -137,9 +131,7 @@ api.interceptors.response.use(
     |--------------------------------------------------------------------------
     */
 
-    if (
-      error.response?.status === 401
-    ) {
+    if (error.response?.status === 401) {
       localStorage.removeItem(
         "amri_admin_token"
       );
@@ -164,16 +156,16 @@ api.interceptors.response.use(
 |--------------------------------------------------------------------------
 */
 
-export const sendContactEmail =
-  async (contactData) => {
-    const response =
-      await api.post(
-        "/contact",
-        contactData
-      );
+export const sendContactEmail = async (
+  contactData
+) => {
+  const response = await api.post(
+    "/contact",
+    contactData
+  );
 
-    return response.data;
-  };
+  return response.data;
+};
 
 /*
 |--------------------------------------------------------------------------
