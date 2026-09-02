@@ -12,6 +12,9 @@ import {
   X,
 } from "lucide-react";
 
+const API_URL =
+  (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
+
 const STATUS_LABELS = {
   submitted: "New Request",
   bank_details_sent: "Bank Details Sent",
@@ -60,8 +63,7 @@ const MembershipManager = () => {
         "amri_admin_token"
       );
 
-      const response = await fetch(
-        "/api/membership",
+      const response = await fetch(`${API_URL}/api/membership`,
         {
           method: "GET",
           headers: {
@@ -190,7 +192,7 @@ const MembershipManager = () => {
       );
 
       const response = await fetch(
-        `/api/membership/${membership._id}/send-bank-details`,
+        `${API_URL}/api/membership/${membership._id}/send-bank-details`,
         {
           method: "POST",
           headers: {
@@ -285,7 +287,7 @@ const MembershipManager = () => {
       );
 
       const response = await fetch(
-        `/api/membership/${membership._id}/payment-received`,
+        `${API_URL}/api/membership/${membership._id}/payment-received`,
         {
           method: "PATCH",
           headers: {
@@ -380,7 +382,7 @@ const MembershipManager = () => {
       );
 
       const response = await fetch(
-        `/api/membership/${membership._id}/make-member`,
+        `${API_URL}/api/membership/${membership._id}/make-member`,
         {
           method: "PATCH",
           headers: {
