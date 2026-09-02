@@ -1,54 +1,156 @@
 import axios from "axios";
 
+/*
+|--------------------------------------------------------------------------
+| API BASE URL
+|--------------------------------------------------------------------------
+|
+| Development:
+|   http://localhost:5000
+|
+| Production:
+|   https://amri-gofn.vercel.app
+|
+| VITE_API_URL can override this in Vercel.
+|
+|--------------------------------------------------------------------------
+*/
+
+const configuredApiUrl =
+  import.meta.env.VITE_API_URL;
+
 const API_URL =
-  import.meta.env.VITE_API_URL || "http://localhost:5000";
+  configuredApiUrl && configuredApiUrl.trim()
+    ? configuredApiUrl.trim()
+    : import.meta.env.PROD
+      ? "https://amri-gofn.vercel.app"
+      : "http://localhost:5000";
+
+/*
+|--------------------------------------------------------------------------
+| NORMALIZE API URL
+|--------------------------------------------------------------------------
+|
+| These all become:
+|
+| https://amri-gofn.vercel.app/api
+|
+| https://amri-gofn.vercel.app/api/
+|
+| https://amri-gofn.vercel.app
+|
+|--------------------------------------------------------------------------
+*/
 
 const baseURL =
   API_URL
-    .trim()
     .replace(/\/+$/, "")
-    .replace(/\/api$/, "") + "/api";
+    .replace(/\/api$/i, "") + "/api";
+
+console.log("AMRI API Base URL:", baseURL);
+
+/*
+|--------------------------------------------------------------------------
+| AXIOS INSTANCE
+|--------------------------------------------------------------------------
+*/
 
 const api = axios.create({
   baseURL,
   withCredentials: true,
+
+  headers: {
+    Accept: "application/json",
+  },
 });
 
-// =====================================================
-// REQUEST INTERCEPTOR
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| REQUEST INTERCEPTOR
+|--------------------------------------------------------------------------
+*/
 
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("amri_admin_token");
+    const token =
+      localStorage.getItem(
+        "amri_admin_token"
+      );
 
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers =
+        config.headers || {};
+
+      config.headers.Authorization =
+        `Bearer ${token}`;
     }
 
-    if (config.data instanceof FormData) {
-      delete config.headers["Content-Type"];
+    /*
+    |--------------------------------------------------------------------------
+    | CONTENT TYPE
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      config.data instanceof FormData
+    ) {
+      /*
+      Do NOT manually set multipart/form-data.
+      Axios/browser will add the correct boundary.
+      */
+
+      if (config.headers) {
+        delete config.headers[
+          "Content-Type"
+        ];
+      }
     } else {
-      config.headers["Content-Type"] = "application/json";
+      config.headers =
+        config.headers || {};
+
+      config.headers["Content-Type"] =
+        "application/json";
     }
 
     return config;
   },
-  (error) => Promise.reject(error)
+  (error) => {
+    return Promise.reject(error);
+  }
 );
 
-// =====================================================
-// RESPONSE INTERCEPTOR
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| RESPONSE INTERCEPTOR
+|--------------------------------------------------------------------------
+*/
 
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem("amri_admin_token");
+  (response) => {
+    return response;
+  },
 
-      if (!window.location.pathname.includes("/admin/login")) {
-        window.location.href = "/admin/login";
+  (error) => {
+    /*
+    |--------------------------------------------------------------------------
+    | UNAUTHORIZED
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      error.response?.status === 401
+    ) {
+      localStorage.removeItem(
+        "amri_admin_token"
+      );
+
+      if (
+        !window.location.pathname.includes(
+          "/admin/login"
+        )
+      ) {
+        window.location.href =
+          "/admin/login";
       }
     }
 
@@ -56,17 +158,27 @@ api.interceptors.response.use(
   }
 );
 
-// =====================================================
-// CONTACT EMAIL
-// =====================================================
+/*
+|--------------------------------------------------------------------------
+| CONTACT EMAIL
+|--------------------------------------------------------------------------
+*/
 
-export const sendContactEmail = async (contactData) => {
-  const response = await api.post("/contact", contactData);
-  return response.data;
-};
+export const sendContactEmail =
+  async (contactData) => {
+    const response =
+      await api.post(
+        "/contact",
+        contactData
+      );
 
-// =====================================================
-// DEFAULT EXPORT
-// =====================================================
+    return response.data;
+  };
+
+/*
+|--------------------------------------------------------------------------
+| DEFAULT EXPORT
+|--------------------------------------------------------------------------
+*/
 
 export default api;
