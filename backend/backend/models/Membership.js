@@ -242,7 +242,7 @@ const membershipSchema = new mongoose.Schema(
 
     renewalId: {
       type: String,
-      default: null,
+      // default: null,
 
       unique: true,
 
