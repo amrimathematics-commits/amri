@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
+import api from "./api";
+
 import {
   CheckCircle2,
   Clock3,
@@ -167,49 +169,6 @@ const MembershipManager = () => {
   |--------------------------------------------------------------------------
   */
 
-  const getHeaders = () => {
-    const token =
-      localStorage.getItem(
-        "amri_admin_token"
-      );
-
-    return {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-    };
-  };
-
-  /*
-  |--------------------------------------------------------------------------
-  | SAFE RESPONSE READER
-  |--------------------------------------------------------------------------
-  */
-
-  const readResponse = async (response) => {
-    const contentType =
-      response.headers.get(
-        "content-type"
-      ) || "";
-
-    if (
-      contentType.includes(
-        "application/json"
-      )
-    ) {
-      return await response.json();
-    }
-
-    const text =
-      await response.text();
-
-    throw new Error(
-      `Server returned ${response.status}. ${
-        text ||
-        "Unexpected server response."
-      }`
-    );
-  };
-
   /*
   |--------------------------------------------------------------------------
   | UPDATE MEMBERSHIP IN STATE
@@ -259,24 +218,9 @@ const MembershipManager = () => {
       setLoading(true);
       setError("");
 
-      const response =
-        await fetch(
-          "/api/membership",
-          {
-            method: "GET",
-            headers: getHeaders(),
-          }
-        );
+      const response = await api.get("/membership");
 
-      const result =
-        await readResponse(response);
-
-      if (!response.ok) {
-        throw new Error(
-          result?.message ||
-            "Unable to load membership applications."
-        );
-      }
+      const result = response.data;
 
       setMemberships(
         result?.data || []
@@ -288,7 +232,8 @@ const MembershipManager = () => {
       );
 
       setError(
-        err.message ||
+        err.response?.data?.message ||
+          err.message ||
           "Unable to load membership applications."
       );
     } finally {
@@ -307,24 +252,11 @@ const MembershipManager = () => {
       setBankLoading(true);
       setBankError("");
 
-      const response =
-        await fetch(
-          "/api/membership/bank-details",
-          {
-            method: "GET",
-            headers: getHeaders(),
-          }
-        );
+      const response = await api.get(
+        "/membership/bank-details"
+      );
 
-      const result =
-        await readResponse(response);
-
-      if (!response.ok) {
-        throw new Error(
-          result?.message ||
-            "Unable to load bank details."
-        );
-      }
+      const result = response.data;
 
       if (result?.data) {
         setBankDetails({
@@ -386,24 +318,11 @@ const MembershipManager = () => {
       try {
         setRenewalLoading(true);
 
-        const response =
-          await fetch(
-            "/api/admin/membership-renewals/pending",
-            {
-              method: "GET",
-              headers: getHeaders(),
-            }
-          );
+        const response = await api.get(
+          "/admin/membership-renewals/pending"
+        );
 
-        const result =
-          await readResponse(response);
-
-        if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Unable to load pending renewals."
-          );
-        }
+        const result = response.data;
 
         setPendingRenewals(
           result?.data || []
@@ -432,13 +351,10 @@ const MembershipManager = () => {
         |--------------------------------------------------------------------------
         */
 
-        if (
-          !String(
-            err.message || ""
-          ).includes("404")
-        ) {
+        if (err.response?.status !== 404) {
           setError(
-            err.message ||
+            err.response?.data?.message ||
+              err.message ||
               "Unable to load pending renewals."
           );
         }
@@ -492,27 +408,12 @@ const MembershipManager = () => {
         setError("");
         setSuccess("");
 
-        const response =
-          await fetch(
-            "/api/membership/bank-details",
-            {
-              method: "PUT",
-              headers: getHeaders(),
-              body: JSON.stringify(
-                bankDetails
-              ),
-            }
-          );
+        const response = await api.put(
+          "/membership/bank-details",
+          bankDetails
+        );
 
-        const result =
-          await readResponse(response);
-
-        if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Unable to save bank details."
-          );
-        }
+        const result = response.data;
 
         if (result?.data) {
           setBankDetails({
@@ -559,7 +460,8 @@ const MembershipManager = () => {
         );
 
         setBankError(
-          err.message ||
+          err.response?.data?.message ||
+            err.message ||
             "Unable to save bank details."
         );
       } finally {
@@ -590,24 +492,11 @@ const MembershipManager = () => {
         setError("");
         setSuccess("");
 
-        const response =
-          await fetch(
-            `/api/membership/${membership._id}/send-bank-details`,
-            {
-              method: "POST",
-              headers: getHeaders(),
-            }
-          );
+        const response = await api.post(
+          `/membership/${membership._id}/send-bank-details`
+        );
 
-        const result =
-          await readResponse(response);
-
-        if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Unable to send bank details."
-          );
-        }
+        const result = response.data;
 
         updateMembership(
           result.data
@@ -623,7 +512,8 @@ const MembershipManager = () => {
         );
 
         setError(
-          err.message ||
+          err.response?.data?.message ||
+            err.message ||
             "Unable to send bank details."
         );
       } finally {
@@ -675,24 +565,11 @@ const MembershipManager = () => {
         setError("");
         setSuccess("");
 
-        const response =
-          await fetch(
-            `/api/membership/${membership._id}/payment-received`,
-            {
-              method: "PATCH",
-              headers: getHeaders(),
-            }
-          );
+        const response = await api.patch(
+          `/membership/${membership._id}/payment-received`
+        );
 
-        const result =
-          await readResponse(response);
-
-        if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Unable to verify payment."
-          );
-        }
+        const result = response.data;
 
         updateMembership(
           result.data
@@ -708,7 +585,8 @@ const MembershipManager = () => {
         );
 
         setError(
-          err.message ||
+          err.response?.data?.message ||
+            err.message ||
             "Unable to verify payment."
         );
       } finally {
@@ -739,24 +617,11 @@ const MembershipManager = () => {
         setError("");
         setSuccess("");
 
-        const response =
-          await fetch(
-            `/api/membership/${membership._id}/make-member`,
-            {
-              method: "PATCH",
-              headers: getHeaders(),
-            }
-          );
+        const response = await api.patch(
+          `/membership/${membership._id}/make-member`
+        );
 
-        const result =
-          await readResponse(response);
-
-        if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Unable to activate membership."
-          );
-        }
+        const result = response.data;
 
         updateMembership(
           result.data
@@ -772,7 +637,8 @@ const MembershipManager = () => {
         );
 
         setError(
-          err.message ||
+          err.response?.data?.message ||
+            err.message ||
             "Unable to activate membership."
         );
       } finally {
@@ -826,24 +692,9 @@ const MembershipManager = () => {
         setError("");
         setSuccess("");
 
-        const response =
-          await fetch(
-            `/api/membership/${membership._id}`,
-            {
-              method: "DELETE",
-              headers: getHeaders(),
-            }
-          );
-
-        const result =
-          await readResponse(response);
-
-        if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Unable to delete membership."
-          );
-        }
+        await api.delete(
+          `/membership/${membership._id}`
+        );
 
         setMemberships(
           (current) =>
@@ -871,7 +722,8 @@ const MembershipManager = () => {
         );
 
         setError(
-          err.message ||
+          err.response?.data?.message ||
+            err.message ||
             "Unable to delete membership."
         );
       } finally {
@@ -927,28 +779,12 @@ const MembershipManager = () => {
         setError("");
         setSuccess("");
 
-        const response =
-          await fetch(
-            `/api/membership/${membership._id}/stop`,
-            {
-              method: "PATCH",
-              headers: getHeaders(),
-              body: JSON.stringify({
-                reason:
-                  cleanReason,
-              }),
-            }
-          );
+        const response = await api.patch(
+          `/membership/${membership._id}/stop`,
+          { reason: cleanReason }
+        );
 
-        const result =
-          await readResponse(response);
-
-        if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Unable to stop membership."
-          );
-        }
+        const result = response.data;
 
         updateMembership(
           result.data
@@ -964,7 +800,8 @@ const MembershipManager = () => {
         );
 
         setError(
-          err.message ||
+          err.response?.data?.message ||
+            err.message ||
             "Unable to stop membership."
         );
       } finally {
@@ -995,24 +832,11 @@ const MembershipManager = () => {
         setError("");
         setSuccess("");
 
-        const response =
-          await fetch(
-            `/api/membership/${membership._id}/reactivate`,
-            {
-              method: "PATCH",
-              headers: getHeaders(),
-            }
-          );
+        const response = await api.patch(
+          `/membership/${membership._id}/reactivate`
+        );
 
-        const result =
-          await readResponse(response);
-
-        if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Unable to reactivate membership."
-          );
-        }
+        const result = response.data;
 
         updateMembership(
           result.data
@@ -1028,7 +852,8 @@ const MembershipManager = () => {
         );
 
         setError(
-          err.message ||
+          err.response?.data?.message ||
+            err.message ||
             "Unable to reactivate membership."
         );
       } finally {
@@ -1059,24 +884,11 @@ const MembershipManager = () => {
         setError("");
         setSuccess("");
 
-        const response =
-          await fetch(
-            `/api/admin/membership-renewals/${membership._id}/approve`,
-            {
-              method: "POST",
-              headers: getHeaders(),
-            }
-          );
+        const response = await api.post(
+          `/admin/membership-renewals/${membership._id}/approve`
+        );
 
-        const result =
-          await readResponse(response);
-
-        if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Unable to approve renewal."
-          );
-        }
+        const result = response.data;
 
         setPendingRenewals(
           (current) =>
@@ -1105,7 +917,8 @@ const MembershipManager = () => {
         );
 
         setError(
-          err.message ||
+          err.response?.data?.message ||
+            err.message ||
             "Unable to approve renewal."
         );
       } finally {
@@ -1136,24 +949,11 @@ const MembershipManager = () => {
         setError("");
         setSuccess("");
 
-        const response =
-          await fetch(
-            `/api/admin/membership-renewals/${membership._id}/reject`,
-            {
-              method: "POST",
-              headers: getHeaders(),
-            }
-          );
+        const response = await api.post(
+          `/admin/membership-renewals/${membership._id}/reject`
+        );
 
-        const result =
-          await readResponse(response);
-
-        if (!response.ok) {
-          throw new Error(
-            result?.message ||
-              "Unable to reject renewal."
-          );
-        }
+        const result = response.data;
 
         setPendingRenewals(
           (current) =>
@@ -1180,7 +980,8 @@ const MembershipManager = () => {
         );
 
         setError(
-          err.message ||
+          err.response?.data?.message ||
+            err.message ||
             "Unable to reject renewal."
         );
       } finally {
