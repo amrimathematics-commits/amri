@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
+import api from "../../services/api";
+
 import {
   CheckCircle2,
   Clock3,
@@ -12,9 +14,6 @@ import {
   X,
 } from "lucide-react";
 
-const API_URL =
-  (import.meta.env.VITE_API_URL || "http://localhost:5000").replace(/\/+$/, "");
-
 const STATUS_LABELS = {
   submitted: "New Request",
   bank_details_sent: "Bank Details Sent",
@@ -23,30 +22,59 @@ const STATUS_LABELS = {
 };
 
 const STATUS_STYLES = {
-  submitted: "bg-blue-50 text-blue-700 border-blue-100",
-  bank_details_sent: "bg-amber-50 text-amber-700 border-amber-100",
-  payment_received: "bg-green-50 text-green-700 border-green-100",
-  member: "bg-[#101c4d]/10 text-[#101c4d] border-[#101c4d]/10",
+  submitted:
+    "bg-blue-50 text-blue-700 border-blue-100",
+
+  bank_details_sent:
+    "bg-amber-50 text-amber-700 border-amber-100",
+
+  payment_received:
+    "bg-green-50 text-green-700 border-green-100",
+
+  member:
+    "bg-[#101c4d]/10 text-[#101c4d] border-[#101c4d]/10",
 };
 
 const MembershipManager = () => {
   const [memberships, setMemberships] = useState([]);
+
   const [loading, setLoading] = useState(true);
+
   const [error, setError] = useState("");
 
   const [selectedMembership, setSelectedMembership] =
     useState(null);
 
   const [search, setSearch] = useState("");
+
   const [statusFilter, setStatusFilter] =
     useState("all");
 
   const [actionLoading, setActionLoading] =
     useState(null);
 
-  const [actionError, setActionError] = useState("");
+  const [actionError, setActionError] =
+    useState("");
+
   const [actionSuccess, setActionSuccess] =
     useState("");
+
+  /*
+  |--------------------------------------------------------------------------
+  | HELPER - GET ERROR MESSAGE
+  |--------------------------------------------------------------------------
+  */
+
+  const getErrorMessage = (
+    err,
+    fallback
+  ) => {
+    return (
+      err?.response?.data?.message ||
+      err?.message ||
+      fallback
+    );
+  };
 
   /*
   |--------------------------------------------------------------------------
@@ -59,48 +87,12 @@ const MembershipManager = () => {
       setLoading(true);
       setError("");
 
-      const token = localStorage.getItem(
-        "amri_admin_token"
+      const response =
+        await api.get("/membership");
+
+      setMemberships(
+        response.data?.data || []
       );
-
-      const response = await fetch(`${API_URL}/api/membership`,
-        {
-          method: "GET",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const contentType =
-        response.headers.get("content-type") || "";
-
-      let result;
-
-      if (
-        contentType.includes(
-          "application/json"
-        )
-      ) {
-        result = await response.json();
-      } else {
-        const text = await response.text();
-
-        throw new Error(
-          `Server returned ${response.status}. ${
-            text.slice(0, 120) || ""
-          }`
-        );
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          result?.message ||
-            "Unable to load membership applications."
-        );
-      }
-
-      setMemberships(result?.data || []);
     } catch (err) {
       console.error(
         "Failed to load memberships:",
@@ -108,8 +100,10 @@ const MembershipManager = () => {
       );
 
       setError(
-        err.message ||
+        getErrorMessage(
+          err,
           "Unable to load membership applications."
+        )
       );
     } finally {
       setLoading(false);
@@ -127,9 +121,8 @@ const MembershipManager = () => {
   */
 
   const filteredMemberships = useMemo(() => {
-    const query = search
-      .trim()
-      .toLowerCase();
+    const query =
+      search.trim().toLowerCase();
 
     return memberships.filter((item) => {
       const matchesSearch =
@@ -186,28 +179,19 @@ const MembershipManager = () => {
 
       setActionError("");
       setActionSuccess("");
+      setError("");
 
-      const token = localStorage.getItem(
-        "amri_admin_token"
-      );
+      const response =
+        await api.post(
+          `/membership/${membership._id}/send-bank-details`
+        );
 
-      const response = await fetch(
-        `${API_URL}/api/membership/${membership._id}/send-bank-details`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const updatedMembership =
+        response.data?.data;
 
-      const result =
-        await response.json();
-
-      if (!response.ok) {
+      if (!updatedMembership) {
         throw new Error(
-          result?.message ||
-            "Unable to send bank details."
+          "Server did not return the updated membership."
         );
       }
 
@@ -216,11 +200,7 @@ const MembershipManager = () => {
           item._id === membership._id
             ? {
                 ...item,
-                status:
-                  "bank_details_sent",
-                bankDetailsSent: true,
-                bankDetailsSentAt:
-                  new Date().toISOString(),
+                ...updatedMembership,
               }
             : item
         )
@@ -228,14 +208,7 @@ const MembershipManager = () => {
 
       setSelectedMembership((current) =>
         current?._id === membership._id
-          ? {
-              ...current,
-              status:
-                "bank_details_sent",
-              bankDetailsSent: true,
-              bankDetailsSentAt:
-                new Date().toISOString(),
-            }
+          ? updatedMembership
           : current
       );
 
@@ -249,8 +222,10 @@ const MembershipManager = () => {
       );
 
       setActionError(
-        err.message ||
+        getErrorMessage(
+          err,
           "Unable to send bank details."
+        )
       );
     } finally {
       setActionLoading(null);
@@ -281,28 +256,19 @@ const MembershipManager = () => {
 
       setActionError("");
       setActionSuccess("");
+      setError("");
 
-      const token = localStorage.getItem(
-        "amri_admin_token"
-      );
+      const response =
+        await api.patch(
+          `/membership/${membership._id}/payment-received`
+        );
 
-      const response = await fetch(
-        `${API_URL}/api/membership/${membership._id}/payment-received`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const updatedMembership =
+        response.data?.data;
 
-      const result =
-        await response.json();
-
-      if (!response.ok) {
+      if (!updatedMembership) {
         throw new Error(
-          result?.message ||
-            "Unable to mark payment received."
+          "Server did not return the updated membership."
         );
       }
 
@@ -311,11 +277,7 @@ const MembershipManager = () => {
           item._id === membership._id
             ? {
                 ...item,
-                status:
-                  "payment_received",
-                paymentReceived: true,
-                paymentReceivedAt:
-                  new Date().toISOString(),
+                ...updatedMembership,
               }
             : item
         )
@@ -323,14 +285,7 @@ const MembershipManager = () => {
 
       setSelectedMembership((current) =>
         current?._id === membership._id
-          ? {
-              ...current,
-              status:
-                "payment_received",
-              paymentReceived: true,
-              paymentReceivedAt:
-                new Date().toISOString(),
-            }
+          ? updatedMembership
           : current
       );
 
@@ -344,8 +299,10 @@ const MembershipManager = () => {
       );
 
       setActionError(
-        err.message ||
+        getErrorMessage(
+          err,
           "Unable to mark payment received."
+        )
       );
     } finally {
       setActionLoading(null);
@@ -376,42 +333,28 @@ const MembershipManager = () => {
 
       setActionError("");
       setActionSuccess("");
+      setError("");
 
-      const token = localStorage.getItem(
-        "amri_admin_token"
-      );
+      const response =
+        await api.patch(
+          `/membership/${membership._id}/make-member`
+        );
 
-      const response = await fetch(
-        `${API_URL}/api/membership/${membership._id}/make-member`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
+      const updatedMembership =
+        response.data?.data;
 
-      const result =
-        await response.json();
-
-      if (!response.ok) {
+      if (!updatedMembership) {
         throw new Error(
-          result?.message ||
-            "Unable to activate membership."
+          "Server did not return the updated membership."
         );
       }
-
-      const updated =
-        result?.data || {};
 
       setMemberships((current) =>
         current.map((item) =>
           item._id === membership._id
             ? {
                 ...item,
-                ...updated,
-                status: "member",
-                isMember: true,
+                ...updatedMembership,
               }
             : item
         )
@@ -419,12 +362,7 @@ const MembershipManager = () => {
 
       setSelectedMembership((current) =>
         current?._id === membership._id
-          ? {
-              ...current,
-              ...updated,
-              status: "member",
-              isMember: true,
-            }
+          ? updatedMembership
           : current
       );
 
@@ -438,8 +376,10 @@ const MembershipManager = () => {
       );
 
       setActionError(
-        err.message ||
+        getErrorMessage(
+          err,
           "Unable to activate membership."
+        )
       );
     } finally {
       setActionLoading(null);
@@ -455,26 +395,32 @@ const MembershipManager = () => {
   const counts = useMemo(() => {
     return {
       all: memberships.length,
-      submitted: memberships.filter(
-        (item) =>
-          item.status === "submitted"
-      ).length,
+
+      submitted:
+        memberships.filter(
+          (item) =>
+            item.status === "submitted"
+        ).length,
+
       bank_details_sent:
         memberships.filter(
           (item) =>
             item.status ===
             "bank_details_sent"
         ).length,
+
       payment_received:
         memberships.filter(
           (item) =>
             item.status ===
             "payment_received"
         ).length,
-      member: memberships.filter(
-        (item) =>
-          item.status === "member"
-      ).length,
+
+      member:
+        memberships.filter(
+          (item) =>
+            item.status === "member"
+        ).length,
     };
   }, [memberships]);
 
@@ -484,7 +430,9 @@ const MembershipManager = () => {
   |--------------------------------------------------------------------------
   */
 
-  const renderActions = (membership) => {
+  const renderActions = (
+    membership
+  ) => {
     const bankLoading =
       actionLoading ===
       `bank-${membership._id}`;
@@ -617,6 +565,7 @@ const MembershipManager = () => {
           size={17}
           className="animate-spin"
         />
+
         Loading membership applications...
       </div>
     );
@@ -660,7 +609,6 @@ const MembershipManager = () => {
 
       </div>
 
-
       {/* MESSAGES */}
 
       {(error ||
@@ -683,7 +631,6 @@ const MembershipManager = () => {
 
         </div>
       )}
-
 
       {/* STATUS SUMMARY */}
 
@@ -758,7 +705,6 @@ const MembershipManager = () => {
 
       </div>
 
-
       {/* SEARCH */}
 
       <div className="mb-5 flex flex-col gap-3 md:flex-row">
@@ -783,7 +729,6 @@ const MembershipManager = () => {
         </div>
 
       </div>
-
 
       {/* APPLICATION LIST */}
 
@@ -882,7 +827,6 @@ const MembershipManager = () => {
 
                     </div>
 
-
                     {/* ACTIONS */}
 
                     <div className="flex flex-wrap items-center gap-2">
@@ -919,20 +863,29 @@ const MembershipManager = () => {
 
       </div>
 
-
-      {/* ============================================================
-          DETAILS MODAL
-      ============================================================ */}
+      {/* DETAILS MODAL */}
 
       {selectedMembership && (
 
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (
+              e.target ===
+              e.currentTarget
+            ) {
+              setSelectedMembership(
+                null
+              );
+            }
+          }}
+        >
 
-          <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-white shadow-2xl">
+          <div className="flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
 
             {/* MODAL HEADER */}
 
-            <div className="sticky top-0 z-10 flex items-start justify-between border-b border-[#101c4d]/10 bg-white px-6 py-5">
+            <div className="flex items-start justify-between border-b border-[#101c4d]/10 px-6 py-5">
 
               <div>
 
@@ -961,10 +914,9 @@ const MembershipManager = () => {
 
             </div>
 
-
             {/* DETAILS */}
 
-            <div className="space-y-7 p-6">
+            <div className="space-y-7 overflow-y-auto p-6">
 
               {/* APPLICANT */}
 
@@ -1019,7 +971,6 @@ const MembershipManager = () => {
 
               </section>
 
-
               {/* MEMBERSHIP */}
 
               <section className="border-t border-[#101c4d]/10 pt-6">
@@ -1053,7 +1004,6 @@ const MembershipManager = () => {
 
               </section>
 
-
               {/* STATUS */}
 
               <section className="border-t border-[#101c4d]/10 pt-6">
@@ -1070,7 +1020,8 @@ const MembershipManager = () => {
                       className={`rounded-full border px-3 py-1.5 font-mono text-[10px] uppercase tracking-wide ${
                         STATUS_STYLES[
                           selectedMembership.status
-                        ]
+                        ] ||
+                        "bg-gray-50 text-gray-600"
                       }`}
                     >
                       {
@@ -1096,7 +1047,6 @@ const MembershipManager = () => {
                 </div>
 
               </section>
-
 
               {/* RECEIPT */}
 
@@ -1138,10 +1088,9 @@ const MembershipManager = () => {
 
             </div>
 
-
             {/* MODAL ACTIONS */}
 
-            <div className="sticky bottom-0 flex flex-wrap justify-end gap-2 border-t border-[#101c4d]/10 bg-white px-6 py-4">
+            <div className="flex flex-wrap justify-end gap-2 border-t border-[#101c4d]/10 bg-white px-6 py-4">
 
               {renderActions(
                 selectedMembership
@@ -1170,7 +1119,6 @@ const MembershipManager = () => {
     </div>
   );
 };
-
 
 /*
 |--------------------------------------------------------------------------
