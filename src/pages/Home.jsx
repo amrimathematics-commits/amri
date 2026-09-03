@@ -10,24 +10,22 @@ import {
 
 const whyAmri = [
   {
-    symbol: '◇',
-    title: 'Research',
-    text: 'Research excellence and collaboration across academic institutions.',
+    symbol: '01',
+    title: 'VISION',
+    heading: 'Shaping the Future Through Mathematics',
+    text: 'To build a globally connected mathematical community that advances excellence, innovation, and impactful research.',
   },
   {
-    symbol: '∑',
-    title: 'Mathematics',
-    text: 'Advancing mathematical knowledge across pure and applied domains.',
+    symbol: '02',
+    title: 'MISSION',
+    heading: 'Turning Knowledge into Impact',
+    text: 'To foster research, collaboration, and interdisciplinary innovation by creating meaningful opportunities for learning, discovery, and professional growth.',
   },
   {
-    symbol: 'AI',
-    title: 'Technology',
-    text: 'Mathematics for AI, machine learning and data science.',
-  },
-  {
-    symbol: '↗',
-    title: 'Innovation',
-    text: 'Turning mathematical ideas into real-world impact.',
+    symbol: '03',
+    title: 'CORE VALUES',
+    heading: 'Excellence. Integrity. Innovation.',
+    text: 'We champion collaboration, curiosity, inclusivity, and impact, empowering individuals to explore ideas, create knowledge, and shape the future.',
   },
 ]
 
@@ -185,28 +183,27 @@ export default function Home() {
 
       </section>
 
-
       {/* =========================================================
-          WHY AMRI
+      WHY AMRI
       ========================================================= */}
       <section className="bg-paper border-y border-ink/10">
 
         <div className="max-w-6xl mx-auto px-6 py-24">
 
-          <h2 className="font-display text-3xl font-semibold text-center mb-14">
+          <h2 className="font-display text-3xl sm:text-4xl font-semibold text-center mb-14">
             Why AMRI?
           </h2>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
 
             {whyAmri.map((item) => (
 
               <div
                 key={item.title}
-                className="border border-ink/15 p-6 hover:border-pen transition-colors"
+                className="border border-ink/15 p-7 hover:border-pen transition-colors"
               >
 
-                <span className="font-display text-2xl text-gold">
+                <span className="font-mono text-xs tracking-widest text-gold">
                   {item.symbol}
                 </span>
 
@@ -214,7 +211,11 @@ export default function Home() {
                   {item.title}
                 </h3>
 
-                <p className="mt-2 text-sm text-ink-soft leading-relaxed">
+                <h4 className="mt-5 font-display text-xl font-semibold leading-snug">
+                  {item.heading}
+                </h4>
+
+                <p className="mt-4 text-sm text-ink-soft leading-relaxed">
                   {item.text}
                 </p>
 
@@ -227,7 +228,6 @@ export default function Home() {
         </div>
 
       </section>
-
 
       {/* =========================================================
           RESEARCH AREAS
