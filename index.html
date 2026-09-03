@@ -1,5 +1,7 @@
-<head>
+<!doctype html>
+<html lang="en">
 
+<head>
   <meta charset="UTF-8" />
 
   <link rel="icon" type="image/png" href="/logo.png" />
@@ -9,9 +11,7 @@
     content="width=device-width, initial-scale=1.0"
   />
 
-  <title>
-    AMRI — Association for Mathematics, Research and Innovation
-  </title>
+  <title>AMRI — Association for Mathematics, Research and Innovation</title>
 
   <meta
     name="description"
@@ -33,7 +33,6 @@
     content="index, follow"
   />
 
-  <!-- Open Graph -->
   <meta
     property="og:title"
     content="AMRI — Association for Mathematics, Research and Innovation"
@@ -49,7 +48,16 @@
     content="website"
   />
 
-  <!-- Twitter -->
+  <meta
+    property="og:url"
+    content="https://amri-rho.vercel.app/"
+  />
+
+  <meta
+    property="og:site_name"
+    content="AMRI"
+  />
+
   <meta
     name="twitter:card"
     content="summary"
@@ -65,13 +73,13 @@
     content="AMRI advances mathematics, research, education and innovation through collaboration among students, researchers, faculty and professionals."
   />
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
 
   <link
     rel="preconnect"
     href="https://fonts.gstatic.com"
     crossorigin
-  >
+  />
 
   <link
     href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500;1,9..144,600&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
@@ -79,3 +87,13 @@
   />
 
 </head>
+
+<body>
+
+  <div id="root"></div>
+
+  <script type="module" src="/src/main.jsx"></script>
+
+</body>
+
+</html>
