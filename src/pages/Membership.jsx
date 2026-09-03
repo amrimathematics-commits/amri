@@ -22,7 +22,7 @@ const plans = [
     name: "Lifetime",
     price: 5000,
     duration: "Lifetime",
-    description: "One-time membership for lifelong association.",
+    description: "Join the association for a lifetime with a one-time membership. An annual renewal fee of ₹500 is required to maintain active membership",
   },
 ];
 
