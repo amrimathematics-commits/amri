@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+
+  <url>
+    <loc>https://amri-rho.vercel.app/</loc>
+  </url>
+
+  <url>
+    <loc>https://amri-rho.vercel.app/about</loc>
+  </url>
+
+  <url>
+    <loc>https://amri-rho.vercel.app/research</loc>
+  </url>
+
+  <url>
+    <loc>https://amri-rho.vercel.app/programs</loc>
+  </url>
+
+  <url>
+    <loc>https://amri-rho.vercel.app/events</loc>
+  </url>
+
+  <url>
+    <loc>https://amri-rho.vercel.app/membership</loc>
+  </url>
+
+  <url>
+    <loc>https://amri-rho.vercel.app/membership/renew</loc>
+  </url>
+
+  <url>
+    <loc>https://amri-rho.vercel.app/innovation</loc>
+  </url>
+
+  <url>
+    <loc>https://amri-rho.vercel.app/contact</loc>
+  </url>
+
+  <url>
+    <loc>https://amri-rho.vercel.app/register</loc>
+  </url>
+
+</urlset>

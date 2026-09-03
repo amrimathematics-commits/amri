@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+Disallow: /admin/
+Disallow: /membership/payment/
+
+Sitemap: https://amri-rho.vercel.app/sitemap.xml
